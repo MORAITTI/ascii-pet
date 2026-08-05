@@ -1,54 +1,73 @@
 import subprocess
-import json
 import os
+import sys
 
-# Получаем список всех репозиториев пользователя через GitHub CLI
-user = os.getenv('GITHUB_REPOSITORY').split('/')[0]  # ваш логин
+# Get your GitHub username from the repository context
+repo_full = os.getenv('GITHUB_REPOSITORY', '')
+if not repo_full:
+    print("GITHUB_REPOSITORY not set")
+    sys.exit(1)
+user = repo_full.split('/')[0]
+
+# Use GH_TOKEN if provided, otherwise fallback to GITHUB_TOKEN (limited)
+token = os.getenv('GH_TOKEN') or os.getenv('GITHUB_TOKEN')
+if not token:
+    print("No token found")
+    sys.exit(1)
+
+# 1. Fetch list of all repositories (public + private if token has repo scope)
 cmd = f"gh api user/repos --jq '.[].name'"
-repos = subprocess.check_output(cmd, shell=True, text=True).strip().split('\n')
+try:
+    repos_output = subprocess.check_output(cmd, shell=True, text=True, env={**os.environ, 'GITHUB_TOKEN': token})
+except subprocess.CalledProcessError as e:
+    print(f"Failed to fetch repos: {e}")
+    sys.exit(1)
+
+repos = [r for r in repos_output.strip().split('\n') if r]
 
 total_weekly = 0
 
+# 2. Clone each repo and count commits by this user in the last 7 days
 for repo in repos:
-    if not repo:
-        continue
-    # Клонируем каждый репозиторий (глубоко не нужно, достаточно lightweight)
-    clone_cmd = f"git clone --depth 1 --filter=blob:none https://github.com/{user}/{repo}.git /tmp/{repo} 2>/dev/null || true"
+    clone_url = f"https://{user}:{token}@github.com/{user}/{repo}.git"
+    clone_cmd = f"git clone --depth 1 --filter=blob:none {clone_url} /tmp/{repo} 2>/dev/null || true"
     subprocess.run(clone_cmd, shell=True)
-    # Считаем коммиты автора за последние 7 дней
+
     count_cmd = f"git -C /tmp/{repo} rev-list --count --author='{user}' --since='7 days ago' HEAD 2>/dev/null || echo 0"
-    count = int(subprocess.check_output(count_cmd, shell=True, text=True).strip())
+    try:
+        count = int(subprocess.check_output(count_cmd, shell=True, text=True).strip())
+    except:
+        count = 0
     total_weekly += count
-    # Удаляем клон, чтобы не захламлять
+
     subprocess.run(f"rm -rf /tmp/{repo}", shell=True)
 
-# Определяем состояние питомца
-if total_weekly == 0:
-    stage = "💀 Голодная смерть"
+# 3. Calculate satiety (max 20 commits = 100%)
+MAX_COMMITS = 20
+satiety = min(100, int((total_weekly / MAX_COMMITS) * 100))
+
+# 4. Determine colors and status
+if satiety < 30:
+    bar_color = "#e74c3c"   # red
+    status = "Hungry"
     ascii_art = r"""
      .-.
     (x.x)
      |=|
     /|_|\
     """
-elif total_weekly < 5:
-    stage = "😵 Ослаблен"
+elif satiety < 70:
+    bar_color = "#f1c40f"   # yellow
+    status = "Normal"
     ascii_art = r"""
      .-.
     (o.o)
      |=|
     /|_|\
     """
-elif total_weekly < 15:
-    stage = "😐 В норме"
-    ascii_art = r"""
-     .-.
-    (^_^)
-     |=|
-    /|_|\
-    """
 else:
-    stage = "⚡ Энергичный зверь"
+    bar_color = "#2ecc71"   # green
+    status = "Energetic"
     ascii_art = r"""
      .-.
     (>_<)
@@ -56,26 +75,23 @@ else:
     /|_|\
     """
 
-# Общее число коммитов за всё время (опционально) — можно тоже посчитать, но оставим для красоты
-total_all = subprocess.check_output(
-    f"gh api users/{user}/events --jq '[.[] | select(.type==\"PushEvent\")] | length'",
-    shell=True, text=True
-).strip()
-if not total_all:
-    total_all = "?"
-
-# Генерируем SVG
-svg_content = f'''<svg xmlns="http://www.w3.org/2000/svg" width="520" height="340">
+# 5. Build SVG with progress bar
+svg_content = f'''<svg xmlns="http://www.w3.org/2000/svg" width="540" height="380">
   <rect width="100%" height="100%" fill="#0d1117" rx="10"/>
+
   <text x="20" y="40" font-family="Courier New, monospace" fill="#58a6ff" font-size="18">
-    📅 Коммитов за неделю (все репозитории): {total_weekly}
+    Commits last week: {total_weekly}
   </text>
-  <text x="20" y="80" font-family="Courier New, monospace" fill="#f0883e" font-size="18">
-    🏆 Всего коммитов (приблизительно): {total_all}
+  <text x="20" y="75" font-family="Courier New, monospace" fill="#f0883e" font-size="16">
+    Status: {status}
   </text>
-  <text x="20" y="120" font-family="Courier New, monospace" fill="#c9d1d9" font-size="16">
-    Статус: {stage}
+
+  <text x="20" y="115" font-family="Courier New, monospace" fill="#c9d1d9" font-size="14">
+    Satiety: {satiety}%
   </text>
+  <rect x="20" y="130" width="480" height="20" rx="10" fill="#2d2d2d" />
+  <rect x="20" y="130" width="{int(480 * satiety / 100)}" height="20" rx="10" fill="{bar_color}" />
+
   <text x="20" y="190" font-family="Courier New, monospace" fill="#c9d1d9" font-size="14" xml:space="preserve">
 {ascii_art}
   </text>
@@ -84,4 +100,4 @@ svg_content = f'''<svg xmlns="http://www.w3.org/2000/svg" width="520" height="34
 with open('pet.svg', 'w') as f:
     f.write(svg_content)
 
-print(f"✅ Питомец обновлён! Недельных коммитов: {total_weekly}")
+print(f"Pet updated. Weekly commits: {total_weekly}, Satiety: {satiety}%")
