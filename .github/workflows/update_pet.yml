@@ -2,12 +2,11 @@ name: Update ASCII Pet
 
 on:
   schedule:
-    - cron: '0 */6 * * *'
-  workflow_dispatch:      # ручной запуск
+    - cron: '0 */6 * * *'      # каждые 6 часов
+  workflow_dispatch:           # ручной запуск
 
-permissions: 
-  contents: write    # чтобы пушить pet.svg
-
+permissions:
+  contents: write              # чтобы пушить pet.svg
 
 jobs:
   update:
@@ -20,7 +19,7 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Install Github CLI
+      - name: Install GitHub CLI
         run: sudo apt-get install gh
 
       - name: Generate pet.svg
@@ -31,7 +30,7 @@ jobs:
       - name: Commit and push
         run: |
           git config --local user.email "action@github.com"
-          git config --local user.name "Github Action"
+          git config --local user.name "GitHub Action"
           git add pet.svg
-          git diff --stage --quiet || git commit -m "обновлён питомец"
+          git diff --staged --quiet || git commit -m "🦎 Обновлён питомец"
           git push
