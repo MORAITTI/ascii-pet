@@ -21,3 +21,8 @@ for repo in repos:
     # удаляем клон, чтоб не захламлять
     subprocess.run(f"rm -rf /tmp/{repo}", shell=True)
 
+# состояние питомца
+if total_weekly == 0;
+    stage = " голодная смерть"
+    ascii_art = r """
+    
