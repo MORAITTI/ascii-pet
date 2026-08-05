@@ -1,6 +1,8 @@
 import subprocess
 import os
 import sys
+import json
+import urllib.request
 
 # Get your GitHub username from the repository context
 repo_full = os.getenv('GITHUB_REPOSITORY', '')
@@ -9,27 +11,25 @@ if not repo_full:
     sys.exit(1)
 user = repo_full.split('/')[0]
 
-# Use GH_TOKEN if provided, otherwise fallback to GITHUB_TOKEN (limited)
-token = os.getenv('GH_TOKEN') or os.getenv('GITHUB_TOKEN')
-if not token:
-    print("No token found")
-    sys.exit(1)
-
-# 1. Fetch list of all repositories (public + private if token has repo scope)
-cmd = f"gh api user/repos --jq '.[].name'"
+# 1. Fetch list of public repositories using public GitHub API
+url = f"https://api.github.com/users/{user}/repos?type=public&per_page=100"
 try:
-    repos_output = subprocess.check_output(cmd, shell=True, text=True, env={**os.environ, 'GITHUB_TOKEN': token})
-except subprocess.CalledProcessError as e:
-    print(f"Failed to fetch repos: {e}")
+    with urllib.request.urlopen(url) as response:
+        data = json.loads(response.read().decode())
+        repos = [repo['name'] for repo in data]
+except Exception as e:
+    print(f"Failed to fetch public repos: {e}")
     sys.exit(1)
 
-repos = [r for r in repos_output.strip().split('\n') if r]
+if not repos:
+    print("No public repositories found")
+    sys.exit(0)
 
 total_weekly = 0
 
-# 2. Clone each repo and count commits by this user in the last 7 days
+# 2. Clone each public repo and count commits by this user in the last 7 days
 for repo in repos:
-    clone_url = f"https://{user}:{token}@github.com/{user}/{repo}.git"
+    clone_url = f"https://github.com/{user}/{repo}.git"
     clone_cmd = f"git clone --depth 1 --filter=blob:none {clone_url} /tmp/{repo} 2>/dev/null || true"
     subprocess.run(clone_cmd, shell=True)
 
@@ -46,7 +46,7 @@ for repo in repos:
 MAX_COMMITS = 20
 satiety = min(100, int((total_weekly / MAX_COMMITS) * 100))
 
-# 4. Determine colors and status
+# 4. Determine status and ASCII art
 if satiety < 30:
     bar_color = "#e74c3c"   # red
     status = "Hungry"
@@ -80,7 +80,7 @@ svg_content = f'''<svg xmlns="http://www.w3.org/2000/svg" width="540" height="38
   <rect width="100%" height="100%" fill="#0d1117" rx="10"/>
 
   <text x="20" y="40" font-family="Courier New, monospace" fill="#58a6ff" font-size="18">
-    Commits last week: {total_weekly}
+    Commits last week (public repos): {total_weekly}
   </text>
   <text x="20" y="75" font-family="Courier New, monospace" fill="#f0883e" font-size="16">
     Status: {status}
