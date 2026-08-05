@@ -19,12 +19,7 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Install GitHub CLI
-        run: sudo apt-get install gh
-
       - name: Generate pet.svg
-        env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}  # we'll set this later
         run: python generate_pet.py
 
       - name: Commit and push
