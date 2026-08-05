@@ -5,4 +5,4 @@
 Just paste the following line into your GitHub profile `README.md`:
 
 ```markdown
-![My ASCII pet](https://raw.githubusercontent.com/MORAITTI/ascii-pet/main/pet.svg)
+![My ASCII pet](https://raw.githubusercontent.com/username/ascii-pet/main/pet.svg)
