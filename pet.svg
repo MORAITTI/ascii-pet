@@ -2,17 +2,17 @@
   <rect width="100%" height="100%" fill="#0d1117" rx="10"/>
 
   <text x="20" y="40" font-family="Courier New, monospace" fill="#58a6ff" font-size="18">
-    Commits last week (public repos): 2
+    Commits last week (public repos): 1
   </text>
   <text x="20" y="75" font-family="Courier New, monospace" fill="#f0883e" font-size="16">
     Status: Hungry
   </text>
 
   <text x="20" y="115" font-family="Courier New, monospace" fill="#c9d1d9" font-size="14">
-    Satiety: 10%
+    Satiety: 5%
   </text>
   <rect x="20" y="130" width="480" height="20" rx="10" fill="#2d2d2d" />
-  <rect x="20" y="130" width="48" height="20" rx="10" fill="#e74c3c" />
+  <rect x="20" y="130" width="24" height="20" rx="10" fill="#e74c3c" />
 
   <text x="20" y="190" font-family="Courier New, monospace" fill="#c9d1d9" font-size="14" xml:space="preserve">
 
