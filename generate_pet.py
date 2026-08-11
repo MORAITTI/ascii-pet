@@ -9,7 +9,7 @@ import urllib.request
 # ============================================================
 
 # Color of the ASCII art (any valid hex color, e.g. "#00ff00" for green)
-ASCII_COLOR = "#c9d1d9"   # default: light gray (matches GitHub dark theme)
+ASCII_COLOR = "#c9d1d9"   # default: light gray
 
 # Number of weekly commits needed for 100% satiety
 MAX_COMMITS = 20
@@ -19,17 +19,15 @@ HUNGRY_THRESHOLD = 30
 NORMAL_THRESHOLD = 70
 
 # ============================================================
-#  DO NOT EDIT BELOW THIS LINE UNLESS YOU KNOW WHAT YOU'RE DOING
+#  DO NOT EDIT BELOW THIS LINE
 # ============================================================
 
-# Get your GitHub username from the repository context
 repo_full = os.getenv('GITHUB_REPOSITORY', '')
 if not repo_full:
     print("GITHUB_REPOSITORY not set")
     sys.exit(1)
 user = repo_full.split('/')[0]
 
-# 1. Fetch list of public repositories using public GitHub API
 url = f"https://api.github.com/users/{user}/repos?type=public&per_page=100"
 try:
     with urllib.request.urlopen(url) as response:
@@ -45,7 +43,6 @@ if not repos:
 
 total_weekly = 0
 
-# 2. Clone each public repo and count commits by this user in the last 7 days
 for repo in repos:
     clone_url = f"https://github.com/{user}/{repo}.git"
     clone_cmd = f"git clone --depth 1 --filter=blob:none {clone_url} /tmp/{repo} 2>/dev/null || true"
@@ -60,44 +57,24 @@ for repo in repos:
 
     subprocess.run(f"rm -rf /tmp/{repo}", shell=True)
 
-# 3. Calculate satiety (0-100%)
 satiety = min(100, int((total_weekly / MAX_COMMITS) * 100))
 
-# 4. Determine status, bar color and ASCII art
+# ---------- SINGLE-LINE ASCII ART (no multiline issues) ----------
 if satiety < HUNGRY_THRESHOLD:
     bar_color = "#e74c3c"   # red
     status = "Hungry"
-    ascii_art = r"""
-     .-.
-    (x.x)
-     |=|
-    /|_|\
-    """
+    ascii_art = "  (x_x)   "   # sad face
 elif satiety < NORMAL_THRESHOLD:
     bar_color = "#f1c40f"   # yellow
     status = "Normal"
-    ascii_art = r"""
-     .-.
-    (o.o)
-     |=|
-    /|_|\
-    """
+    ascii_art = "  (o_o)   "   # neutral face
 else:
     bar_color = "#2ecc71"   # green
     status = "Energetic"
-    ascii_art = r"""
-     .-.
-    (>_<)
-     |=|
-    /|_|\
-    """
+    ascii_art = "  (>_<)   "   # excited face
 
-# 5. Split ASCII art into separate lines
-lines = ascii_art.strip('\n').split('\n')
-# Remove empty lines at start/end, but keep internal indentation
-
-# 6. Build SVG with progress bar and multi-line ASCII art
-svg_content = f'''<svg xmlns="http://www.w3.org/2000/svg" width="540" height="380">
+# Build SVG with one-line ASCII art
+svg_content = f'''<svg xmlns="http://www.w3.org/2000/svg" width="540" height="340">
   <rect width="100%" height="100%" fill="#0d1117" rx="10"/>
 
   <text x="20" y="40" font-family="Courier New, monospace" fill="#58a6ff" font-size="18">
@@ -112,17 +89,9 @@ svg_content = f'''<svg xmlns="http://www.w3.org/2000/svg" width="540" height="38
   </text>
   <rect x="20" y="130" width="480" height="20" rx="10" fill="#2d2d2d" />
   <rect x="20" y="130" width="{int(480 * satiety / 100)}" height="20" rx="10" fill="{bar_color}" />
-'''
 
-# Add each line of ASCII art as a separate <text> element
-y_pos = 190
-for line in lines:
-    # Escape XML special characters (just in case)
-    line = line.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
-    svg_content += f'  <text x="20" y="{y_pos}" font-family="Courier New, monospace" fill="{ASCII_COLOR}" font-size="14">{line}</text>\n'
-    y_pos += 20  # line height
-
-svg_content += '</svg>'
+  <text x="20" y="190" font-family="Courier New, monospace" fill="{ASCII_COLOR}" font-size="30">{ascii_art}</text>
+</svg>'''
 
 with open('pet.svg', 'w') as f:
     f.write(svg_content)
