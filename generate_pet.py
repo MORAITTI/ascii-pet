@@ -77,13 +77,13 @@ svg_content = f'''<svg xmlns="http://www.w3.org/2000/svg" width="540" height="38
     Status: {status}
   </text>
 
-  <text x="20" y="115" font-family="Courier New, monospace" fill="#FF2E2E" font-size="14">
+  <text x="20" y="115" font-family="Courier New, monospace" fill="#c9d1d9" font-size="14">
     Satiety: {satiety}%
   </text>
   <rect x="20" y="130" width="480" height="20" rx="10" fill="#2d2d2d" />
   <rect x="20" y="130" width="{int(480 * satiety / 100)}" height="20" rx="10" fill="{bar_color}" />
 
-  <text x="20" y="190" font-family="Courier New, monospace" fill="#c9d1d9" font-size="14" xml:space="preserve">
+  <text x="20" y="190" font-family="Courier New, monospace" fill="#FF2E2E" font-size="14" xml:space="preserve">
 {ascii_art}
   </text>
 </svg>'''
