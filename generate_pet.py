@@ -51,28 +51,19 @@ if satiety < 30:
     bar_color = "#e74c3c"   # red
     status = "Hungry"
     ascii_art = r"""
-     .-.
     (x.x)
-     |=|
-    /|_|\
     """
 elif satiety < 70:
     bar_color = "#f1c40f"   # yellow
     status = "Normal"
     ascii_art = r"""
-     .-.
     (o.o)
-     |=|
-    /|_|\
     """
 else:
     bar_color = "#2ecc71"   # green
     status = "Energetic"
     ascii_art = r"""
-     .-.
     (>_<)
-     |=|
-    /|_|\
     """
 
 # 5. Build SVG with progress bar
