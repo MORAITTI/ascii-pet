@@ -70,7 +70,7 @@ else:
 svg_content = f'''<svg xmlns="http://www.w3.org/2000/svg" width="540" height="380">
   <rect width="100%" height="100%" fill="#0d1117" rx="10"/>
 
-  <text x="60" y="{y_pos}" font-family="Courier New, monospace" fill="#FF2E2E" font-size="18">
+  <text x="60" y="60" font-family="Courier New, monospace" fill="#FF2E2E" font-size="18">
     Commits last week (public repos): {total_weekly}
   </text>
   <text x="20" y="75" font-family="Courier New, monospace" fill="#f0883e" font-size="16">
