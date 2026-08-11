@@ -63,7 +63,7 @@ else:
     bar_color = "#2ecc71"   # green
     status = "Energetic"
     ascii_art = r"""
-    (>_<)
+    (^_^)
     """
 
 # 5. Build SVG with progress bar
